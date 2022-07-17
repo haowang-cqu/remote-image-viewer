@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>远程图片查看器</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/jquery.fancybox.min.css">
+    <style>
+        .thumbnail {
+            aspect-ratio: 1/1;
+            background-color: gainsboro;
+        }
+        .thumbnail > img {
+            max-height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid" style="background-color: #222; padding: 10px; margin-bottom: 20px;">
+        <div class="container">
+            <form class="form-inline">
+                <div class="form-group">
+                    <label for="path" style="color: #fff;">路径</label>
+                    <input type="text" class="form-control" id="path" placeholder="图片所在文件夹" style="width: 300px; margin-right: 10px;">
+                </div>
+                <div class="form-group">
+                    <label for="pageNum" style="color: #fff;">页码</label>
+                    <input type="number" class="form-control" id="pageNum" value="1"  style="width: 80px;margin-right: 10px;">
+                </div>
+                <div class="form-group">
+                    <label for="pageSize" style="color: #fff;">每页显示几张图片</label>
+                    <input type="number" class="form-control" id="pageSize" value="12" style="width: 80px;margin-right: 10px;">
+                </div>
+                <div style="display: inline; float: right;">
+                    <button id="view" type="button" class="btn btn-default">查看</button>
+                    <button id="prev" type="button" class="btn btn-default" disabled>上一页</button>
+                    <button id="next" type="button" class="btn btn-default">下一页</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="container">
+        <div id="images" class="row">
+        </div>
+    </div>
+    <script src="/static/js/jquery-3.3.1.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.fancybox.min.js"></script>
+    <script>
+        $(function () {
+            function load () {
+                $.ajax({
+                    url: "/list",
+                    type: "get",
+                    dataType: "json",
+                    data: {
+                        path: $("#path").val(),
+                        pageNum: $("#pageNum").val(),
+                        pageSize: $("#pageSize").val(),
+                    },
+                    success: function (result) {
+                        if (result.code !== 0) {
+                            alert(result.msg);
+                            return;
+                        }
+                        $("#pageNum").val(result.page.pageNum);
+                        if (result.page.pageNum >= result.page.pages) {
+                            $("#next").prop("disabled", true);
+                        } else {
+                            $("#next").prop("disabled", false);
+                        }
+                        if (result.page.pageNum <= 1) {
+                            $("#prev").prop("disabled", true);
+                        } else {
+                            $("#prev").prop("disabled", false);
+                        }
+                        $("#images").empty();
+                        result.page.list.map(path => {
+                            let filename = path.substring(path.lastIndexOf("/") + 1);
+                            let image = `
+                            <div class="col-xs-6 col-md-3">
+                                <a data-fancybox="gallery" href="/image/${path}" class="thumbnail">
+                                    <img src="/image/${path}" alt="${filename}">
+                                </a>
+                            </div>
+                            `
+                            $("#images").append(image);
+                        });
+                    },
+                });
+            }
+
+            $("#view").click(function () {
+                load();
+            });
+
+            $("#prev").click(function () {
+                $("#pageNum").val(parseInt($("#pageNum").val()) - 1);
+                load();
+            });
+
+            $("#next").click(function () {
+                $("#pageNum").val(parseInt($("#pageNum").val()) + 1);
+                load();
+            });
+            
+            // 回车查看
+            $("input").keyup(function (event) {
+                if (event.keyCode == 13 && $("#path").val()) {
+                    load();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
