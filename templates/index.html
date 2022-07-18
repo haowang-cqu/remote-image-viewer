@@ -29,16 +29,16 @@
                 </div>
                 <div class="form-group">
                     <label for="pageNum" style="color: #fff;">页码</label>
-                    <input type="number" class="form-control" id="pageNum" value="1"  style="width: 80px;margin-right: 10px;">
+                    <input type="number" class="form-control" id="pageNum" value="1" min="1" style="width: 80px;margin-right: 10px;">
                 </div>
                 <div class="form-group">
                     <label for="pageSize" style="color: #fff;">每页显示几张图片</label>
-                    <input type="number" class="form-control" id="pageSize" value="12" style="width: 80px;margin-right: 10px;">
+                    <input type="number" class="form-control" id="pageSize" value="12" min="1" style="width: 80px;margin-right: 10px;">
                 </div>
                 <div style="display: inline; float: right;">
-                    <button id="view" type="button" class="btn btn-default">查看</button>
+                    <button id="view" type="button" class="btn btn-default" disabled>查看</button>
                     <button id="prev" type="button" class="btn btn-default" disabled>上一页</button>
-                    <button id="next" type="button" class="btn btn-default">下一页</button>
+                    <button id="next" type="button" class="btn btn-default" disabled>下一页</button>
                 </div>
             </form>
         </div>
@@ -53,6 +53,10 @@
     <script>
         $(function () {
             function load () {
+                if (!$("#path").val()) {
+                    $("button").prop("disabled", true);
+                    return;
+                }
                 $.ajax({
                     url: "/list",
                     type: "get",
@@ -68,6 +72,7 @@
                             return;
                         }
                         $("#pageNum").val(result.page.pageNum);
+                        $("#pageNum").prop("max", result.page.pages);
                         if (result.page.pageNum >= result.page.pages) {
                             $("#next").prop("disabled", true);
                         } else {
@@ -83,7 +88,7 @@
                             let filename = path.substring(path.lastIndexOf("/") + 1);
                             let image = `
                             <div class="col-xs-6 col-md-3">
-                                <a data-fancybox="gallery" href="/image/${path}" class="thumbnail">
+                                <a data-fancybox="gallery" href="/image/${path}" class="thumbnail" title="${filename}">
                                     <img src="/image/${path}" alt="${filename}">
                                 </a>
                             </div>
@@ -112,6 +117,22 @@
             $("input").keyup(function (event) {
                 if (event.keyCode == 13 && $("#path").val()) {
                     load();
+                }
+            });
+
+            $("#pageNum").on("input", function () {
+                load();
+            });
+
+            $("#pageSize").on("input", function () {
+                load();
+            });
+
+            $("#path").on("input", function () {
+                if (!$("#path").val()) {
+                    $("button").prop("disabled", true);
+                } else {
+                    $("button").prop("disabled", false);
                 }
             });
         });
